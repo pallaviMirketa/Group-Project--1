@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Notifying_Outstanding_Amount_Email</name>
+        <label>Notifying Outstanding Amount Email</label>
+        <locationX>1106</locationX>
+        <locationY>408</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <connector>
+            <targetReference>Update_Payment_status</targetReference>
+        </connector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>OutstandingAmountNotifyingEmailBody</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <elementReference>$Record.Opportunity__r.Account.Contact__r.Email</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>sendRichBody</name>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>OutstandingAmountEmailSubject</elementReference>
+            </value>
+        </inputParameters>
+    </actionCalls>
+    <actionCalls>
+        <name>reminder_email</name>
+        <label>reminder email</label>
+        <locationX>578</locationX>
+        <locationY>408</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>reminderemailbody</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <elementReference>$Record.Opportunity__r.Account.Contact__r.Email</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>reminderemailsubject</elementReference>
+            </value>
+        </inputParameters>
+    </actionCalls>
+    <apiVersion>57.0</apiVersion>
+    <decisions>
+        <name>Payment_Status_checker_1</name>
+        <label>Payment Status checker 1</label>
+        <locationX>182</locationX>
+        <locationY>288</locationY>
+        <defaultConnectorLabel>Payment Done</defaultConnectorLabel>
+        <rules>
+            <name>Payment_not_Done_after_30_days</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Not Paid</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>TaskCreation</targetReference>
+            </connector>
+            <label>Payment not Done  after 30 days</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Payment_Status_Checker_2</name>
+        <label>Payment Status Checker 2</label>
+        <locationX>1238</locationX>
+        <locationY>288</locationY>
+        <defaultConnectorLabel>Payment Done  after 10 days</defaultConnectorLabel>
+        <rules>
+            <name>Payment_not_Done_after_10_days</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Outstanding_Amount__c</leftValueReference>
+                <operator>GreaterThan</operator>
+                <rightValue>
+                    <numberValue>0.0</numberValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Notifying_Outstanding_Amount_Email</targetReference>
+            </connector>
+            <label>Payment not Done after 10 days</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Payment_Status_Checker_reminder_email</name>
+        <label>Payment Status Checker reminder email</label>
+        <locationX>710</locationX>
+        <locationY>288</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>outstanding_amount_is_not_null</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Outstanding_Amount__c</leftValueReference>
+                <operator>GreaterThan</operator>
+                <rightValue>
+                    <numberValue>0.0</numberValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>reminder_email</targetReference>
+            </connector>
+            <label>outstanding amount is not null?</label>
+        </rules>
+    </decisions>
+    <environments>Default</environments>
+    <formulas>
+        <name>DueDate</name>
+        <dataType>DateTime</dataType>
+        <expression>DATETIMEVALUE(TODAY() + 1)</expression>
+    </formulas>
+    <interviewLabel>ScheduleEmailandTaskOnInvoice {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Schedule Email and Task On Invoice</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordCreates>
+        <name>TaskCreation</name>
+        <label>TaskCreation</label>
+        <locationX>50</locationX>
+        <locationY>408</locationY>
+        <inputAssignments>
+            <field>ActivityDate</field>
+            <value>
+                <elementReference>DueDate</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Description</field>
+            <value>
+                <elementReference>TaskDescription</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <elementReference>$Record.Opportunity__r.OwnerId</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Priority</field>
+            <value>
+                <stringValue>High</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Subject</field>
+            <value>
+                <stringValue>Call</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>WhatId</field>
+            <value>
+                <elementReference>$Record.Opportunity__r.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>WhoId</field>
+            <value>
+                <elementReference>$Record.Opportunity__r.Account.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <object>Task</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordCreates>
+    <recordUpdates>
+        <name>Update_Payment_status</name>
+        <label>Update Payment status</label>
+        <locationX>1106</locationX>
+        <locationY>528</locationY>
+        <inputAssignments>
+            <field>Status__c</field>
+            <value>
+                <stringValue>Not Paid</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>386</locationX>
+        <locationY>0</locationY>
+        <object>Sales_Invoice__c</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <scheduledPaths>
+            <name>Create_Task_For_FollowUp</name>
+            <connector>
+                <targetReference>Payment_Status_checker_1</targetReference>
+            </connector>
+            <label>Create Task For FollowUp</label>
+            <offsetNumber>1</offsetNumber>
+            <offsetUnit>Months</offsetUnit>
+            <recordField>Due_Date__c</recordField>
+            <timeSource>RecordField</timeSource>
+        </scheduledPaths>
+        <scheduledPaths>
+            <name>ReminderEmail</name>
+            <connector>
+                <targetReference>Payment_Status_Checker_reminder_email</targetReference>
+            </connector>
+            <label>ReminderEmail</label>
+            <offsetNumber>-10</offsetNumber>
+            <offsetUnit>Days</offsetUnit>
+            <recordField>Due_Date__c</recordField>
+            <timeSource>RecordField</timeSource>
+        </scheduledPaths>
+        <scheduledPaths>
+            <name>Notifying_Outstanding_Amount</name>
+            <connector>
+                <targetReference>Payment_Status_Checker_2</targetReference>
+            </connector>
+            <label>Notifying Outstanding Amount</label>
+            <offsetNumber>10</offsetNumber>
+            <offsetUnit>Days</offsetUnit>
+            <recordField>Due_Date__c</recordField>
+            <timeSource>RecordField</timeSource>
+        </scheduledPaths>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <textTemplates>
+        <name>OutstandingAmountEmailSubject</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Outstanding Balance Due for Order {!$Record.Name}</text>
+    </textTemplates>
+    <textTemplates>
+        <name>OutstandingAmountNotifyingEmailBody</name>
+        <isViewedAsPlainText>false</isViewedAsPlainText>
+        <text>&lt;p&gt;Dear {!$Record{!$Record.Opportunity__r.Account.Contact__r.FirstName}},&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;I hope this email finds you well. I am writing to follow up on the payment for your order, as it appears that the invoice {!$Record.Name} is still outstanding.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;As of now, your outstanding amount is {!$Record.Outstanding_Amount__c}. It would be greatly appreciated if you could make the payment as soon as possible to avoid any further delays.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Thank you for your prompt attention to this matter. If you have any questions or concerns, please don&apos;t hesitate to contact me.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Best regards,&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;{!$Record.Opportunity__r.Owner.Name}&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</text>
+    </textTemplates>
+    <textTemplates>
+        <name>reminderemailbody</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Dear {!$Record.Account__r.Contact__r.FirstName},
+
+I hope this email finds you well. This is a friendly reminder that the payment for the invoice  is still pending. As per our agreement, the total amount due is  {!$Record.Outstanding_Amount__c} .We understand that sometimes things can slip our minds, so we kindly request that you complete the payment as soon as possible. This will help us maintain our financial records up-to-date and avoid any unnecessary delays.
+Please let us know if you require any assistance or have any concerns regarding the payment process. We are always here to help.
+
+Thank you for your cooperation and prompt attention to this matter.
+
+Best regards,
+{!$Record.Opportunity__r.Owner.Name}</text>
+    </textTemplates>
+    <textTemplates>
+        <name>reminderemailsubject</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>reminder email for invoice {!$Record.Id}</text>
+    </textTemplates>
+    <textTemplates>
+        <name>TaskDescription</name>
+        <isViewedAsPlainText>false</isViewedAsPlainText>
+        <text>&lt;p&gt;FollowUp With The customer&lt;/p&gt;</text>
+    </textTemplates>
+</Flow>

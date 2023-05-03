@@ -20,7 +20,7 @@
             <operator>equals</operator>
             <values>THIS_FISCAL_YEAR</values>
         </dashboardFilterOptions>
-        <name>Filter by Periods</name>
+        <name>Filter by period</name>
     </dashboardFilters>
     <dashboardGridLayout>
         <dashboardGridComponents>
